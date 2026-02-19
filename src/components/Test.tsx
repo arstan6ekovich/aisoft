@@ -268,7 +268,7 @@ const Hero = () => {
               />
             </div>
 
-            <div className="absolute bottom-[40px] left-1/2 -translate-x-1/2 origin-bottom">
+            <div className="absolute bottom-[40px] left-1/2 -translate-x-1/2 ">
               <Image
                 src={scalePointer}
                 alt="pointer"
@@ -276,11 +276,7 @@ const Hero = () => {
                 height={60}
                 className="transition-transform duration-500"
                 style={{
-                  transform: `rotate(${
-                    activeItemId !== null && scaleWeight !== null
-                      ? 65 + scaleWeight * 9
-                      : 0
-                  }deg)`,
+                  transform: `rotate(${scaleWeight ? scaleWeight * 18 : 0}deg)`,
                 }}
               />
             </div>
