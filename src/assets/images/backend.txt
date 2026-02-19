@@ -1,0 +1,26 @@
+{
+  "questionId": 748,
+  "studentQuestionId": 0,
+  "questionText": "Взвесь предметы и животных",
+  "motivationMessage": null,
+  "question": null,
+  "steps": null,
+  "options": [
+    {
+      "Text": "Сколько весит ***",
+      "Number": 7,
+      "ImgUrl": "http://77.235.26.17:9000/development/img/"
+    },
+    {
+      "Text": "Сколько весит ***",
+      "Number": 9,
+      "ImgUrl": "http://77.235.26.17:9000/development/img/"
+    },
+    {
+      "Text": "Сколько весит ***",
+      "Number": 8,
+      "ImgUrl": "http://77.235.26.17:9000/development/img/"
+    }
+  ],
+
+}
