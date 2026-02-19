@@ -191,7 +191,10 @@ const Hero = () => {
     setScaleWeight(null);
     if (inputRef.current) inputRef.current.value = "";
   };
-  const activeItem = items.find((item) => item.id === activeItemId);
+  const currentItem =
+    activeItemId !== null
+      ? items.find((item) => item.id === activeItemId)
+      : null;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden flex flex-col items-center justify-center">
@@ -274,7 +277,9 @@ const Hero = () => {
                 className="transition-transform duration-500"
                 style={{
                   transform: `rotate(${
-                    scaleWeight !== null ? 65 + scaleWeight * 9 : 0
+                    activeItemId !== null && scaleWeight !== null
+                      ? 65 + scaleWeight * 9
+                      : 0
                   }deg)`,
                 }}
               />
@@ -285,10 +290,11 @@ const Hero = () => {
 
       <div className="z-10 flex gap-2 px-4 items-center">
         <h1>
-          {activeItem
-            ? `Сколько весит ${activeItem.name}:`
+          {currentItem
+            ? `Сколько весит ${currentItem.name}:`
             : "Положите предмет на весы"}
         </h1>
+
         <input
           ref={inputRef}
           type="text"
