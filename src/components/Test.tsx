@@ -5,8 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import backgroundImg from "@/src/assets/images/background.png";
 import pumpkin from "@/src/assets/images/1.png";
 import fish from "@/src/assets/images/3.png";
-import kettle from "@/src//assets/images/2.png";
-import scaleBase from "@/src//assets/scale/1.png";
+import kettle from "@/src/assets/images/2.png";
+import scaleBase from "@/src/assets/scale/1.png";
 import scalePlate from "@/src/assets/scale/2.png";
 import scalePointer from "@/src/assets/scale/4.png";
 import "alert-go/dist/notifier.css";
@@ -14,19 +14,21 @@ import { toast } from "alert-go";
 
 type Item = {
   id: number;
+  name: string;
   weight: number;
   ImgUrl: any;
   x: number;
   y: number;
+  topOffset?: number;
 };
 
 const initialItems: Item[] = [
-  { id: 1, weight: 9, ImgUrl: fish, x: 0, y: 0 },
-  { id: 2, weight: 8, ImgUrl: pumpkin, x: 0, y: 0 },
-  { id: 3, weight: 7, ImgUrl: kettle, x: 0, y: 0 },
+  { id: 1, name: "рыба", weight: 9, ImgUrl: fish, x: 0, y: 0, topOffset: 15 },
+  { id: 2, name: "тыква", weight: 8, ImgUrl: pumpkin, x: 0, y: 0 },
+  { id: 3, name: "чайник", weight: 7, ImgUrl: kettle, x: 0, y: 0 },
 ];
 
-const ITEM_SIZE = 220; // 🔥 УВЕЛИЧИЛ
+const ITEM_SIZE = 220;
 const SCALE_WIDTH = 180;
 const SCALE_HEIGHT = 220;
 
@@ -35,9 +37,9 @@ const Hero = () => {
   const [originalPositions, setOriginalPositions] =
     useState<Item[]>(initialItems);
   const [scaleWeight, setScaleWeight] = useState<number | null>(null);
-  const [isInputActive, setIsInputActive] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [weighedItems, setWeighedItems] = useState<Set<number>>(new Set());
+  const [activeItemId, setActiveItemId] = useState<number | null>(null);
 
   const scaleRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +51,7 @@ const Hero = () => {
   useEffect(() => {
     if (containerRef.current) {
       const startX = 60;
-      const spacing = 260; // 👈 немного увеличил отступ под новый размер
+      const spacing = 260;
       const positioned = initialItems.map((item, index) => ({
         ...item,
         x: startX + index * spacing,
@@ -64,8 +66,7 @@ const Hero = () => {
     if (scaleWeight !== null && !isAnimating) {
       const timer = setTimeout(() => {
         setItems(originalPositions);
-        setIsInputActive(true);
-        inputRef.current?.focus();
+        setActiveItemId(null);
       }, 1200);
       return () => clearTimeout(timer);
     }
@@ -83,9 +84,11 @@ const Hero = () => {
 
   const handleMouseMove = (e: MouseEvent) => {
     if (draggedIdRef.current === null || !containerRef.current) return;
+
     const containerRect = containerRef.current.getBoundingClientRect();
     const xInContainer = e.clientX - containerRect.left;
     const yInContainer = e.clientY - containerRect.top;
+
     const newX = xInContainer - offsetRef.current.x;
     const newY = yInContainer - offsetRef.current.y;
 
@@ -131,7 +134,20 @@ const Hero = () => {
 
     if (isOverScale) {
       setScaleWeight(item.weight);
+      setActiveItemId(item.id);
       setIsAnimating(true);
+
+      const newX =
+        scaleRect.left - containerRect.left + SCALE_WIDTH / 2 - ITEM_SIZE / 2;
+
+      const baseY = scaleRect.top - containerRect.top - 75;
+
+      const newY = item.id === 1 ? baseY + (item.topOffset ?? 0) : baseY;
+
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, x: newX, y: newY } : i)),
+      );
+
       setTimeout(() => setIsAnimating(false), 1200);
     }
 
@@ -150,6 +166,7 @@ const Hero = () => {
   const handleSubmit = () => {
     const value = inputRef.current?.value.trim();
     if (!value) return;
+
     const userWeight = parseFloat(value);
     const correct = scaleWeight !== null && userWeight === scaleWeight;
 
@@ -159,11 +176,10 @@ const Hero = () => {
         duration: 1500,
       });
 
-      if (scaleWeight !== null) {
-        const currentItem = items.find((item) => item.weight === scaleWeight);
-        if (currentItem) {
-          setWeighedItems((prev) => new Set(prev).add(currentItem.id));
-        }
+      const currentItem = items.find((item) => item.weight === scaleWeight);
+
+      if (currentItem) {
+        setWeighedItems((prev) => new Set(prev).add(currentItem.id));
       }
     } else {
       toast.error(`Неверно. Правильный вес: ${scaleWeight} кг`, {
@@ -173,9 +189,9 @@ const Hero = () => {
     }
 
     setScaleWeight(null);
-    setIsInputActive(false);
     if (inputRef.current) inputRef.current.value = "";
   };
+  const activeItem = items.find((item) => item.id === activeItemId);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden flex flex-col items-center justify-center">
@@ -189,38 +205,41 @@ const Hero = () => {
       />
 
       <div className="absolute w-full h-full flex justify-center items-start pt-[200px]">
-        <div
-          ref={containerRef}
-          className="relative w-[1200px] h-[400px] flex flex-col items-center"
-        >
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="absolute cursor-grab z-20"
-              style={{
-                left: `${item.x}px`,
-                top: `${item.y}px`,
-                width: `${ITEM_SIZE}px`,
-                height: `${ITEM_SIZE}px`,
-              }}
-              onMouseDown={(e) => handleMouseDown(e, item.id)}
-            >
-              <Image
-                src={item.ImgUrl}
-                alt={`Item ${item.id}`}
-                width={ITEM_SIZE}
-                height={ITEM_SIZE}
-                className="w-full h-full object-contain select-none"
-                draggable={false}
-              />
+        <div ref={containerRef} className="relative w-[1200px] h-[400px]">
+          {items.map((item) => {
+            const isOnScale = item.id === activeItemId;
 
-              {weighedItems.has(item.id) && (
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-white font-bold text-lg bg-black/50 px-2 py-1 rounded whitespace-nowrap">
-                  {item.weight} кг
-                </div>
-              )}
-            </div>
-          ))}
+            return (
+              <div
+                key={item.id}
+                className={`absolute cursor-grab z-20 transition-transform duration-500 ${
+                  isOnScale && isAnimating ? "translate-y-3" : ""
+                }`}
+                style={{
+                  left: `${item.x}px`,
+                  top: `${item.y}px`,
+                  width: `${ITEM_SIZE}px`,
+                  height: `${ITEM_SIZE}px`,
+                }}
+                onMouseDown={(e) => handleMouseDown(e, item.id)}
+              >
+                <Image
+                  src={item.ImgUrl}
+                  alt={`Item ${item.id}`}
+                  width={ITEM_SIZE}
+                  height={ITEM_SIZE}
+                  className="w-full h-full object-contain select-none"
+                  draggable={false}
+                />
+
+                {weighedItems.has(item.id) && (
+                  <div className="absolute bottom-[-25px] left-1/2 -translate-x-1/2 bg-white px-2 py-1 rounded-md text-sm font-bold shadow-md">
+                    {item.weight} кг
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           <div
             ref={scaleRef}
@@ -230,18 +249,23 @@ const Hero = () => {
             <Image
               src={scaleBase}
               alt="scale base"
-              className="absolute w-[110px] object-contain bottom-0 left-1/2 transform -translate-x-1/2"
+              className="absolute w-[110px] object-contain bottom-0 left-1/2 -translate-x-1/2"
             />
 
             <div
-              className={`absolute bottom-[120px] left-1/2 transform -translate-x-1/2 transition-transform duration-500 ${
-                isAnimating ? "translate-y-4" : ""
+              className={`absolute bottom-[115px] left-1/2 -translate-x-1/2 transition-transform duration-500 ${
+                isAnimating ? "translate-y-3" : ""
               }`}
             >
-              <Image src={scalePlate} alt="scale plate" width={100} height={50} />
+              <Image
+                src={scalePlate}
+                alt="scale plate"
+                width={100}
+                height={50}
+              />
             </div>
 
-            <div className="absolute bottom-[40px] left-1/2 transform -translate-x-1/2 origin-bottom">
+            <div className="absolute bottom-[40px] left-1/2 -translate-x-1/2 origin-bottom">
               <Image
                 src={scalePointer}
                 alt="pointer"
@@ -249,7 +273,9 @@ const Hero = () => {
                 height={60}
                 className="transition-transform duration-500"
                 style={{
-                  transform: `rotate(${scaleWeight !== null ? 65 + scaleWeight * 9 : 0}deg)`,
+                  transform: `rotate(${
+                    scaleWeight !== null ? 65 + scaleWeight * 9 : 0
+                  }deg)`,
                 }}
               />
             </div>
@@ -257,15 +283,17 @@ const Hero = () => {
         </div>
       </div>
 
-      <div className="z-10 flex gap-2 px-4 item-center">
-        <h1 className="mt-[15px]">Сколько весит утюг:</h1>
+      <div className="z-10 flex gap-2 px-4 items-center">
+        <h1>
+          {activeItem
+            ? `Сколько весит ${activeItem.name}:`
+            : "Положите предмет на весы"}
+        </h1>
         <input
           ref={inputRef}
           type="text"
           inputMode="decimal"
-          className="px-3 py-3 text-lg rounded-lg border-2 w-[60px] h-[30px] mt-[12px]"
-          onFocus={() => setIsInputActive(true)}
-          onBlur={() => setIsInputActive(false)}
+          className="px-3 py-2 text-lg rounded-lg border-2 w-[80px]"
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
       </div>
