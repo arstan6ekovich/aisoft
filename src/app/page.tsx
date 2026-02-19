@@ -1,7 +1,7 @@
-import Hero from "../components/Test";
+import Test from "../components/Test";
 
 const page = () => {
-  return <Hero />;
+  return <Test />;
 };
 
 export default page;

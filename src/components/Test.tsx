@@ -32,7 +32,7 @@ const ITEM_SIZE = 220;
 const SCALE_WIDTH = 180;
 const SCALE_HEIGHT = 220;
 
-const Hero = () => {
+const Test = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [originalPositions, setOriginalPositions] =
     useState<Item[]>(initialItems);
@@ -303,4 +303,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default Test;
